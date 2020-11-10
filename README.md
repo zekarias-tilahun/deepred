@@ -2,13 +2,15 @@
 A PyTorch implementation of DeepRed, an algorithm for next item prediction in temporal interaction networks.
 
 
-### Requirements!
+Requirements!
+-------------
   - Python 3.6+
   - PyTorch 1.4+
   - Numpy 1.17.2+
   - Networkx 2.3+
 
-#### Example usage
+Example usage
+-------------
 
 To run the algorithm, a dataset should be placed under the ```./data/<DATASET>/``` directory, where 
 ```DATASET``` is the name of a dataset and it could be, ```reddit```, ```wikipedia```, ```lastfm```, ```matador```, ```sider```, ```steam```.
@@ -24,7 +26,7 @@ Please ensure that the ```./data/<DATASET>/``` directory contains
 ./data/<DATASET>/output_dir/
 ```
 
-The ```preprocessing``` step can be used to generate the above directories and files.
+The [```preprocessing```](#Preprocessing) step can be used to generate the above directories and files.
 The format of the train, dev, or test files should be one triple per line, as
 ```
 user_id item_id timestamp
@@ -77,7 +79,9 @@ A flag to indicate that ```DATASET``` is a static interacton network. Default is
 `--log-level:`
 The log level. The smaller the log level the more verbose it is. Values are between 0 and 4. Default is 0.
 
-### Preprocessing
+
+Preprocessing
+-------------
 
 The aforementioned files used for running deepred are generated from a single file ```./data/<DATASET>/raw_dir/interaction.txt.```
 To this end, the deepred/preprocess.py module can be used. The ```./data/<DATASET>/raw_dir/interaction.txt.``` file should contain 
@@ -93,7 +97,8 @@ Training rate (proportion). Default is 0.8
 Training rate (proportion). Default is 0.1
 
 
-### Evaluation
+Evaluation
+----------
 
 To evaluate the performance of the algorithm use 
 
@@ -111,7 +116,8 @@ or
 $ bash eval.sh <DATASET>
 ```
 
-### Application to static interaction networks.
+Application to static interaction networks.
+---
 
 To apply DeepRed to static interaction networks, simply change the format of the input data as
 
