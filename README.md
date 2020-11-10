@@ -49,7 +49,7 @@ $ bash run.sh <DATASET>
 ```./deepred/deepred.py``` takes the following input arguments
 
 `--root-dir:`
-A path to the directory assosiated to the ```DATASET``` under consideration. Default is ```../data/wikipedia```
+A path to the directory assosiated to the ```DATASET``` under consideration. Default is ```./data/wikipedia```
 
 `--nbr-size:`
 The neighborhood size or the value for k in the paper. Default is 100.
@@ -61,7 +61,7 @@ The size of the embedding dimension. Default is 128.
 Learning rate. Default is 0.0001
 
 `--reg-cof:`
-A regularization coefficient to avoid collapse into a subspace or gamma in the paper. Default is 0.7
+A regularization coefficient to avoid collapse into a subspace or $\gamma$ in the paper. Default is 0.7
 
 `--dropout:`
 A dropout rate to avoid overfitting. Default is 0.5
@@ -83,8 +83,8 @@ The log level. The smaller the log level the more verbose it is. Values are betw
 Preprocessing
 -------------
 
-The aforementioned files used for running deepred are generated from a single file ```./data/<DATASET>/raw_dir/interaction.txt.```
-To this end, the deepred/preprocess.py module can be used. The ```./data/<DATASET>/raw_dir/interaction.txt.``` file should contain 
+The aforementioned files used for running deepred are generated from a single file ```./data/<DATASET>/raw_dir/interaction.txt```
+To this end, the deepred/preprocess.py module can be used. The ```./data/<DATASET>/raw_dir/interaction.txt``` file should contain 
 triples of the form mentioned above.
 
 The preprocessing takes the same arguments `--root-dir:`, `--temporal:`, `--static:`, `--log-level:` mentioned above in addition
@@ -94,7 +94,7 @@ to the following ones.
 Training rate (proportion). Default is 0.8
 
 `--dev-rate:`
-Training rate (proportion). Default is 0.1
+Development rate (proportion). Default is 0.1
 
 
 Evaluation
@@ -124,3 +124,9 @@ To apply DeepRed to static interaction networks, simply change the format of the
 ```user_id item_id```
 
 and activate the ```--static``` flag whenever necessary.
+
+Evaluate using
+
+```sh
+python deepred/interaction_prediction.py --root-dir ./data/<DATASET>/ --epoch 6
+```
