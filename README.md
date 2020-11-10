@@ -104,3 +104,12 @@ $ python deepred/next_item_prediction.py  --root-dir ./data/<DATASET>/ --epoch <
 ```
 
 where ```--epcoh``` specifies the epoch to be evaluated.
+
+
+### Application to static interaction networks.
+
+To apply DeepRed to static interaction networks, simply change the format of the input data as
+
+```user_id item_id```
+
+and activate the ```--static``` flag whenever necessary.
