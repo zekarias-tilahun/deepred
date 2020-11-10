@@ -1,7 +1,7 @@
 from utils import *
 
 
-from collections import namedtuple
+from collections import namedtuple, Counter
 
 import networkx as nx
 import pandas as pd
@@ -53,6 +53,8 @@ class DeepRedDataset(data.Dataset):
             self.users = data.users
             self.items = data.items
         self.min_item_id = min(self.items)
+        # nodes in the connected component
+        self.nodes_in_cc = set(self.interaction_graph.nodes())
         self.interaction_graph.add_nodes_from(self.users + self.items)
         if args.temporal:
             self.interactions = sorted(self.interaction_graph.edges(data=True), 
@@ -97,18 +99,22 @@ class DeepRedDataset(data.Dataset):
         self.item_ug_dist_75, self.item_ug_dist_75_lst = init(self.items)
         
     def init_negative_interactions(self):
-        size = self.interactions.shape[0]
-        negative_interaction_set = set()
-        nodes = self.nodes
-        np.random.shuffle(nodes)
-        while True:
-            u, v = np.random.randint(0, len(nodes), 2).tolist()
-            if (u, v) not in negative_interaction_set and not self.interaction_graph.has_edge(u, v):
-                negative_interaction_set.add((u, v))
-                if len(negative_interaction_set) >= size:
-                    break
-        self.negative_interactions = np.array(list(negative_interaction_set))
-        self.negative_interaction_graph = nx.DiGraph(list(negative_interaction_set))
+        path = os.path.join(self._args.root_dir, PROCESSED_DIR, 'negative.txt')
+        self.negative_interaction_graph = nx.read_edgelist(path, nodetype=int, create_using=nx.DiGraph)
+        self.negative_interactions = np.array(list(self.negative_interaction_graph.edges()))
+        
+        #size = self.interactions.shape[0]
+        #negative_interaction_set = set()
+        #nodes = self.nodes
+        #np.random.shuffle(nodes)
+        #while True:
+        #    u, v = np.random.randint(0, len(nodes), 2).tolist()
+        #    if (u, v) not in negative_interaction_set and not self.interaction_graph.has_edge(u, v):
+        #        negative_interaction_set.add((u, v))
+        #        if len(negative_interaction_set) >= size:
+        #            break
+        #self.negative_interactions = np.array(list(negative_interaction_set))
+        #self.negative_interaction_graph = nx.DiGraph(list(negative_interaction_set))
         
     def init_neighborhood(self, nbr_size=None):
         pass
@@ -153,23 +159,70 @@ class StaticDataset(DeepRedDataset):
         # We add one to the inner dimmension because 0 is used for zero-padding in the model
         self.neighborhood_matrix = np.zeros(shape=(self.num_nodes + 1, ns))
         self.neighborhood_mask = np.zeros(shape=(self.num_nodes + 1, ns))
-
-    def neighborhood_sampler(self, node, ug_dist_75, sampling_method=UNIFORM_SAMPLING):
+        
+    def _higher_order_sampler(self, node, ug_dist_75, num_walks=10, walk_length=40, sampling_method=UNIFORM_SAMPLING):
+        g = self.interaction_graph
+        args = self._args
+        walks = []
+        neighbors = [other for _, other in interaction_edges(node, data=False) if other in self.nodes_in_cc]
+        for i in range(num_walks):
+            
+            walk = [node]
+            counter = 0
+            while len(walk) < 40:
+                counter += 1
+                
+                cur = walk[-1]
+                interaction_edges = g.in_edges if self.is_item(cur) else g.out_edges
+                if len(interaction_edges(node)) > 0:
+                    # Mask nodes in dev and test set
+                    next_nodes = [other for _, other in interaction_edges(cur, data=False)
+                                  if other != cur and other in self.nodes_in_cc]
+                    if len(next_nodes) > 0:
+                        next_node = np.random.choice(next_nodes)
+                        walk.append(next_node)
+                    else:
+                        break
+                else:
+                    break
+            if len(walk) == 1:
+                break
+            walks += walk
+        if 1 < len(walks) < args.nbr_size:
+            samples = np.zeros(args.nbr_size)
+            samples[:len(walks)] = walks
+            return samples
+            
+        if len(walks) > args.nbr_size:
+            neighbors, weights = zip(*Counter(walks).items())
+            weights = np.array(weights)
+            weights = weights / weights.sum()
+            
+            return np.random.choice(neighbors, size=args.nbr_size, replace=False, p=weights)
+        return np.zeros(args.nbr_size)
+    
+    def _first_order_sampler(self, node, ug_dist_75, sampling_method=UNIFORM_SAMPLING):
         g = self.interaction_graph
         args = self._args
         samples = np.zeros(args.nbr_size)
-        interactions = g.in_edges if self.is_item(node) else g.out_edges
-        node_interactions = list(zip(*list(interactions(node, data=False))))
-        if len(node_interactions) == 0:
-            return samples
+        interaction_edges = g.in_edges if self.is_item(node) else g.out_edges
+        #node_interactions = list(zip(*list(interaction_edges(node, data=False))))
+        #if len(node_interactions) == 0:
+        #    return samples
         
-        _, neighbors = node_interactions
+        #_, neighbors = node_interactions
+        
+        #
+        neighbors = [other for _, other in interaction_edges(node, data=False) if other in self.nodes_in_cc]
+        if len(neighbors) == 0:
+            return samples
         neighbors = np.array(neighbors)
 
         if neighbors.shape[0] < args.nbr_size:
             samples[:neighbors.shape[0]] = neighbors
             return samples
-
+        #
+        
         """
         Sampling neighbors according to the uni-gram distribution of node degrees raised to .75
         TODO:
@@ -178,30 +231,43 @@ class StaticDataset(DeepRedDataset):
         if sampling_method == BIASED_SAMPLING:
             weights = np.array([ug_dist_75[nbr] for nbr in neighbors])
             weights /= weights.sum()
-            weights = 1 - weights / 0.  # TODO: adjust weights
+            #weights = 1 - weights / 0.  # TODO: adjust weights
 
         """If weights is None sampling is uniform"""
         neighbors = np.random.choice(neighbors, size=args.nbr_size, replace=False, p=weights)
         return neighbors
+        
+
+    def neighborhood_sampler(self, node, ug_dist_75, order=FIRST_ORDER_SAMPLING, sampling_method=UNIFORM_SAMPLING):
+        if order == FIRST_ORDER_SAMPLING:
+            return self._first_order_sampler(node=node, ug_dist_75=ug_dist_75, sampling_method=sampling_method)
+        elif order == HIGHER_ORDER_SAMPLING:
+            return self._higher_order_sampler(node=node, ug_dist_75=ug_dist_75, sampling_method=sampling_method)
 
     def build_neighborhood(self):
         """
         Builds node neighborhood matrix along with an associated mask matrix, which will be used to cancel
         the effect of the padded zeros during a softmax computation.
         """
-        def build(nodes, ug_dist_75):
+        def build(nodes, ug_dist_75, user_nodes=True):
+            log(f'Building {"users" if user_nodes else "items"} interaction history ...')
+            counter = 0
             for node in nodes:
                 neighbors = self.neighborhood_sampler(node=node, ug_dist_75=ug_dist_75)
                 self.neighborhood_matrix[node] = neighbors
+                log(f"{counter}/{len(nodes)}", prefix=PROG, cr=True)
+                counter += 1
+            log()
 
-        log('Building interaction history ...')
+        
         args = self._args
         build(self.users, self.item_ug_dist_75)
-        build(self.items, self.user_ug_dist_75)
+        build(self.items, self.user_ug_dist_75, user_nodes=False)
         self.neighborhood_mask = get_neighborhood_mask(self.neighborhood_matrix)
         self.neighborhood_matrix = self.neighborhood_matrix.astype('int')
         
     def init_partitions(self, **kwargs):
+        
         indices = np.random.permutation(self.num_interactions)
         size = indices.shape[0]
         for start in range(0, size, BATCH_SIZE):

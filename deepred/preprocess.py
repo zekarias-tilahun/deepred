@@ -11,14 +11,31 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root-dir', type=str, default='./data/wikipedia/')
     parser.add_argument('--binary', dest='binary', action='store_true')
-    parser.add_argument('--tr-rate', type=float, default=.6)
-    parser.add_argument('--dev-rate', type=float, default=.2)
+    parser.add_argument('--tr-rate', type=float, default=.8)
+    parser.add_argument('--dev-rate', type=float, default=.1)
     parser.add_argument('--temporal', dest='temporal', action='store_true')
     parser.add_argument('--static', dest='temporal', action='store_false')
+    parser.add_argument('--sample', dest='sample', action='store_true')
     parser.add_argument('--log-level', type=int, default=0)
     parser.set_defaults(temporal=False)
     parser.set_defaults(binary=False)
+    parser.set_defaults(sample=False)
     return parser.parse_args()
+
+
+def sample_negative_interactions(graph, test_rate):
+    size = int(graph.number_of_edges() * test_rate)
+    negative_interaction_set = set()
+    nodes = list(graph.nodes())
+    np.random.shuffle(nodes)
+    while True:
+        i, j = np.random.randint(0, len(nodes), 2)
+        u, v = nodes[i], nodes[j]
+        if (u, v) not in negative_interaction_set and not graph.has_edge(u, v):
+            negative_interaction_set.add((u, v))
+            if len(negative_interaction_set) >= size:
+                break
+    return nx.DiGraph(list(negative_interaction_set))
 
 
 def process(args):
@@ -34,7 +51,10 @@ def process(args):
                                    edge_attr=edge_atr, create_using=nx.MultiDiGraph)
     te_g = nx.from_pandas_edgelist(test_interactions, source='Users', target='Items', 
                                    edge_attr=edge_atr, create_using=nx.MultiDiGraph)
-    return int_data.users, int_data.items, tr_g, dv_g, te_g
+    neg_g = None
+    if args.sample:
+        neg_g = sample_negative_interactions(graph=int_data.interaction_graph, test_rate=1-(args.tr_rate + args.dev_rate))
+    return int_data.users, int_data.items, tr_g, dv_g, te_g, neg_g
 
 
 def save_graph(graph, root_dir, partition='train', temporal=False, binary=True, state=False):
@@ -78,12 +98,15 @@ def save_state_label_weights(state_weights, root_dir):
     
 def main():
     args = parse_args()
+    print(args.sample)
     utils.LOG_LEVEL = args.log_level
     utils.create_root_sub_dirs(args.root_dir)
-    users, items, train_graph, dev_graph, test_graph = process(args)
+    users, items, train_graph, dev_graph, test_graph, negative_graph = process(args)
     save_graph(graph=train_graph, root_dir=args.root_dir, temporal=args.temporal, binary=args.binary, partition='train')
     save_graph(graph=dev_graph, root_dir=args.root_dir, temporal=args.temporal, binary=args.binary, partition='dev')
     save_graph(graph=test_graph, root_dir=args.root_dir, temporal=args.temporal, binary=args.binary, partition='test')
+    if negative_graph is not None:
+        save_graph(graph=negative_graph, root_dir=args.root_dir, temporal=args.temporal, binary=args.binary, partition='negative')
     save_nodes(users=users, items=items, root_dir=args.root_dir, binary=args.binary)
     
 

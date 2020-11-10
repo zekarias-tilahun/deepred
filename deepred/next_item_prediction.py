@@ -42,7 +42,7 @@ class NextItemPrediction:
         self.test_data.init_partitions(partitions=test_partitions)
 
         """Loading a desired model"""
-        self.deepred = DeepRed(num_nodes=self.train_data.num_nodes, dim=args.emb_dim, dropout=args.dropout)
+        self.deepred = DeepRed(num_nodes=self.train_data.num_nodes, dim=args.dim, dropout=args.dropout)
         self.deepred.load_model(path=os.path.join(args.root_dir, utils.MODEL_DIR, f'deepred_epoch_{args.epoch}.pt'))
 
         """Loading (initializing+processing) embeddings from a trained model"""
@@ -156,7 +156,7 @@ def parse_args():
     parser.add_argument('--root-dir', '-r', type=str, default='../data/wikipedia',
                         help='Path to a root directory of a dataset')
     parser.add_argument('--nbr-size', '-n', type=int, default=100, help='The same nbr_size value used during training')
-    parser.add_argument('--emb-dim', '-d', type=int, default=128, help='The same emb_dim value used during training')
+    parser.add_argument('--dim', '-d', type=int, default=128, help='The same embedding dimmension value used during training')
     parser.add_argument('--k', '-k', type=int, default=10, help="The k-value for recall@k")
     parser.add_argument('--epoch', type=int, help="The epoch number to be evaluated")
     parser.add_argument('--sfx', type=str, default='', 

@@ -5,8 +5,9 @@ import math
 
 
 def get_encoder(enc_name=None):
-    valid_names = {'rnn', 'cnn', 'base', None}
-    assert enc_name in valid_names or enc_name is None, f"{enc_name} is invalid Encoder name"
+    valid_names = {'rnn', 'cnn', 'base'}
+    invalid_enc_msg = f"{enc_name} is invalid Encoder name. Valid encoder names are 'rnn', 'cnn', or 'base'"
+    assert enc_name in valid_names or enc_name is None, invalid_enc_msg
     if enc_name == 'rnn':
         return RNNEncoder
     if enc_name == 'cnn':

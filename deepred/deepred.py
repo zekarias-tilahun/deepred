@@ -144,7 +144,6 @@ class DeepRed:
 
     def load_model(self, path):
         log(f"Loading model from {path}")
-        #self.model = model.load_state_dict(torch.load(path))
         self.model.load_state_dict(torch.load(path, map_location=self.device))
 
     def transform(self, batches, total_batches=None):
@@ -194,7 +193,7 @@ def main(args):
                 temporal=args.temporal, lr=args.lr, reg_cof=args.reg_cof, 
                 epochs=args.epochs, root_dir=args.root_dir)
     deepred.fit(dataset=train_dataset, dev_dataset=dev_dataset)
-
+    
 
 if __name__ == '__main__':
     main(parse_args())

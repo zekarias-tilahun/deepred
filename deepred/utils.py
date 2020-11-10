@@ -14,6 +14,8 @@ EPSILON = 1e-7
 BATCH_SIZE = 256
 UNIFORM_SAMPLING = 0
 BIASED_SAMPLING = 1
+FIRST_ORDER_SAMPLING = 1
+HIGHER_ORDER_SAMPLING = 2
 
 NO_LOG = 4
 PROGRESS_LOG = 3
@@ -378,5 +380,22 @@ def parse_args():
     parser.add_argument('--log-level', type=int, default=0, help='Log level, values in [0, 4]')
     parser.set_defaults(binary=False)
     parser.set_defaults(temporal=False)
+    return parser.parse_args()
+
+
+def parse_eval_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--root-dir', '-r', type=str, default='../data/wikipedia',
+                        help='Path to a root directory of a dataset')
+    parser.add_argument('--nbr-size', '-n', type=int, default=100, help='The same nbr_size value used during training')
+    parser.add_argument('--dim', '-d', type=int, default=128, help='The same emb_dim value used during training')
+    parser.add_argument('--k', '-k', type=int, default=10, help="The k-value for recall@k")
+    parser.add_argument('--epoch', type=int, help="The epoch number to be evaluated")
+    parser.add_argument('--sfx', type=str, default='', 
+                        help='Used to add suffix for specific cases, for example when evaluating a particular training ratio')
+    parser.add_argument('--binary', dest='binary', action='store_true')
+    parser.set_defaults(binary=False)
+
     return parser.parse_args()
     
