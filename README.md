@@ -35,7 +35,7 @@ containing the ids of a user and an item interacting at a certain timestamp.
 Once we setup the above files and directories, then deepred can be executed using 
 
 ```sh
-$ python deepred/deepred.py
+$ python ./deepred/deepred.py
 ```
 
 or 
@@ -44,7 +44,7 @@ or
 $ bash run.sh <DATASET>
 ```
 
-It takes the following input arguments
+```./deepred/deepred.py``` takes the following input arguments
 
 `--root-dir:`
 A path to the directory assosiated to the ```DATASET``` under consideration. Default is ```../data/wikipedia```
@@ -80,7 +80,7 @@ The log level. The smaller the log level the more verbose it is. Values are betw
 ### Preprocessing
 
 The aforementioned files used for running deepred are generated from a single file ```./data/<DATASET>/raw_dir/interaction.txt.```
-To this end the deepred/preprocess.py can be used. The ```./data/<DATASET>/raw_dir/interaction.txt.``` files should contain 
+To this end, the deepred/preprocess.py module can be used. The ```./data/<DATASET>/raw_dir/interaction.txt.``` file should contain 
 triples of the form mentioned above.
 
 The preprocessing takes the same arguments `--root-dir:`, `--temporal:`, `--static:`, `--log-level:` mentioned above in addition
@@ -100,11 +100,16 @@ To evaluate the performance of the algorithm use
 
 
 ```sh
-$ python deepred/next_item_prediction.py  --root-dir ./data/<DATASET>/ --epoch <EPOCH>
+$ python ./deepred/next_item_prediction.py  --root-dir ./data/<DATASET>/ --epoch <EPOCH>
 ```
 
 where ```--epcoh``` specifies the epoch to be evaluated.
 
+or 
+
+```sh
+$ bash eval.sh <DATASET>
+```
 
 ### Application to static interaction networks.
 
