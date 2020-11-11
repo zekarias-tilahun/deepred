@@ -43,7 +43,7 @@ $ python ./deepred/deepred.py
 or 
 
 ```sh
-$ bash run.sh <DATASET>
+$ bash train.sh <DATASET>
 ```
 
 ```./deepred/deepred.py``` takes the following input arguments
