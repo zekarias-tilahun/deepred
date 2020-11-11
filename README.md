@@ -108,13 +108,24 @@ To evaluate the performance of the algorithm use
 $ python ./deepred/next_item_prediction.py  --root-dir ./data/<DATASET>/ --epoch <EPOCH>
 ```
 
-where ```--epcoh``` specifies the epoch to be evaluated.
-
 or 
 
 ```sh
 $ bash eval.sh <DATASET>
 ```
+
+The `--nbr-size:` and `--dim:` input arguments used during training should be specified to override the default ones, in addition
+the following arguments can be used
+
+`--epcoh:` 
+The epoch to be evaluated.
+
+`--k:` 
+The k value for recall@k
+
+
+
+
 
 Application to static interaction networks.
 ---
