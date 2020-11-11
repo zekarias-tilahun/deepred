@@ -79,7 +79,6 @@ A flag to indicate that ```DATASET``` is a static interacton network. Default is
 `--log-level:`
 The log level. The smaller the log level the more verbose it is. Values are between 0 and 4. Default is 0.
 
-
 Preprocessing
 -------------
 
