@@ -1,5 +1,5 @@
-# DeepRed
-A PyTorch implementation of DeepRed, an algorithm for next item prediction in temporal interaction networks.
+# DeePRed
+A PyTorch implementation of DeePRed, an algorithm for next item prediction in temporal interaction networks.
 
 
 Requirements!
